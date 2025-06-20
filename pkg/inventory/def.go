@@ -21,7 +21,7 @@ type EconAction struct {
 type Asset struct {
 	AppID      uint32 `json:"appid"`
 	ContextID  uint64 `json:"contextid,string"`
-	AssetID    uint64 `json:"assetid,string"`
+	AssetID    string `json:"assetid"`
 	ClassID    uint64 `json:"classid,string"`
 	InstanceID uint64 `json:"instanceid,string"`
 	Amount     uint64 `json:"amount,string"`
@@ -59,7 +59,7 @@ type Response struct {
 type InventoryItem struct {
 	AppID      uint32        `json:"appid"`
 	ContextID  uint64        `json:"contextid"`
-	AssetID    uint64        `json:"id,string,omitempty"`
+	AssetID    string        `json:"id,string,omitempty"`
 	ClassID    uint64        `json:"classid,string,omitempty"`
 	InstanceID uint64        `json:"instanceid,string,omitempty"`
 	Amount     uint64        `json:"amount,string"`
