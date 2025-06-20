@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/umichan0621/steam/pkg/auth"
 )
 
 type WalletInfo struct {
@@ -16,9 +18,9 @@ type WalletInfo struct {
 	Success              int32   `json:"success"`
 }
 
-func (core *Core) WalletBalance() (*WalletInfo, error) {
+func (core *Core) WalletBalance(auth *auth.Core) (*WalletInfo, error) {
 	url := "https://steamcommunity.com/market/"
-	res, err := core.authCore.HttpClient().Get(url)
+	res, err := auth.HttpClient().Get(url)
 	if err != nil {
 		return nil, err
 	}

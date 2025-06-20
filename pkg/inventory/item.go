@@ -6,19 +6,21 @@ import (
 	"io"
 	"net/url"
 	"strconv"
+
+	"github.com/umichan0621/steam/pkg/auth"
 )
 
-func (core *Core) TradableItems(appID, contextID, startAssetID, count uint64, items *[]InventoryItem) (hasMore bool, lastAssetID uint64, err error) {
+func (core *Core) AllItems(auth *auth.Core, appID, contextID, startAssetID string, count uint64, items *[]InventoryItem) (hasMore bool, lastAssetID uint64, err error) {
 	params := url.Values{
 		"l":     {core.language},
 		"count": {strconv.FormatUint(count, 10)},
 	}
-	if startAssetID != 0 {
-		params.Set("start_assetid", strconv.FormatUint(startAssetID, 10))
+	if startAssetID != "" {
+		params.Set("start_assetid", startAssetID)
 	}
 
-	url := fmt.Sprintf("http://steamcommunity.com/inventory/%s/%d/%d?%s", core.authCore.SteamID(), appID, contextID, params.Encode())
-	res, err := core.authCore.HttpClient().Get(url)
+	url := fmt.Sprintf("http://steamcommunity.com/inventory/%s/%s/%s?%s", auth.SteamID(), appID, contextID, params.Encode())
+	res, err := auth.HttpClient().Get(url)
 	if err != nil {
 		return false, 0, err
 	}
@@ -55,10 +57,7 @@ func (core *Core) TradableItems(appID, contextID, startAssetID, count uint64, it
 			Amount:     asset.Amount,
 			Desc:       desc,
 		}
-
-		if item.Desc.Tradable != 0 {
-			*items = append(*items, item)
-		}
+		*items = append(*items, item)
 	}
 	hasMore = resp.HasMore != 0
 	if !hasMore {
