@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/umichan0621/steam/pkg/auth"
 )
 
 type MarketSellResponse struct {
@@ -18,20 +20,17 @@ type MarketSellResponse struct {
 	EmailDomain                string `json:"email_domain"`
 }
 
-func (core *Core) CreateSellOrder(appID uint32, contextID, assetID, amount, paymentPrice uint64) (*MarketSellResponse, error) {
+func (core *Core) CreateSellOrder(auth *auth.Core, appID, contextID, assetID string, amount, paymentPrice uint64) (*MarketSellResponse, error) {
 	reqUrl := "https://steamcommunity.com/market/sellitem/"
-	profileUrl := core.authCore.ProfileUrl()
-	if profileUrl == "" {
-		return nil, fmt.Errorf("fail to get http header refer")
-	}
+	referUrl := fmt.Sprintf("https://steamcommunity.com/profiles/%s/inventory/", auth.SteamID())
 	reqHeader := http.Header{}
 	reqHeader.Add("Content-Type", "application/x-www-form-urlencoded")
-	reqHeader.Add("Referer", profileUrl+"inventory/")
+	reqHeader.Add("Referer", referUrl)
 	reqBody := url.Values{
-		"assetid":   {strconv.FormatUint(assetID, 10)},
-		"sessionid": {core.authCore.SessionID()},
-		"contextid": {strconv.FormatUint(contextID, 10)},
-		"appid":     {strconv.FormatUint(uint64(appID), 10)},
+		"appid":     {appID},
+		"contextid": {contextID},
+		"assetid":   {assetID},
+		"sessionid": {auth.SessionID()},
 		"amount":    {strconv.FormatUint(amount, 10)},
 		"price":     {strconv.FormatUint(paymentPrice, 10)},
 	}
@@ -43,7 +42,7 @@ func (core *Core) CreateSellOrder(appID uint32, contextID, assetID, amount, paym
 
 	req.Header = reqHeader
 
-	res, err := core.authCore.HttpClient().Do(req)
+	res, err := auth.HttpClient().Do(req)
 	if err != nil {
 		return nil, err
 	}

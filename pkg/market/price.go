@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tidwall/gjson"
+	"github.com/umichan0621/steam/pkg/auth"
 	"github.com/umichan0621/steam/pkg/utils"
 )
 
@@ -38,9 +39,9 @@ type OrderGraph struct {
 }
 
 // Get the name ID by hash name, which is used to query history price
-func (core *Core) ItemNameID(appID, hashName string) (string, error) {
+func (core *Core) ItemNameID(auth *auth.Core, appID, hashName string) (string, error) {
 	reqUrl := fmt.Sprintf("https://steamcommunity.com/market/listings/%s/%s", appID, url.PathEscape(hashName))
-	res, err := core.authCore.HttpClient().Get(reqUrl)
+	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return "", err
 	}
@@ -67,7 +68,7 @@ func (core *Core) ItemNameID(appID, hashName string) (string, error) {
 	return "", fmt.Errorf("fail to get item name ID")
 }
 
-func (core *Core) ItemOrderGraph(appID, itemNameID string) (*OrderGraph, error) {
+func (core *Core) ItemOrderGraph(auth *auth.Core, appID, itemNameID string) (*OrderGraph, error) {
 	reqBody := url.Values{
 		"item_nameid": {itemNameID},
 		"language":    {core.language},
@@ -75,7 +76,7 @@ func (core *Core) ItemOrderGraph(appID, itemNameID string) (*OrderGraph, error) 
 		"currency":    {core.currency},
 	}
 	reqUrl := "https://steamcommunity.com/market/itemordershistogram?" + reqBody.Encode()
-	res, err := core.authCore.HttpClient().Get(reqUrl)
+	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -115,13 +116,13 @@ func (core *Core) ItemOrderGraph(appID, itemNameID string) (*OrderGraph, error) 
 	return orderGraph, nil
 }
 
-func (core *Core) PriceHistory(appID, hashName string, lastNDays int) ([]*PriceInfo, error) {
+func (core *Core) PriceHistory(auth *auth.Core, appID, hashName string, lastNDays int) ([]*PriceInfo, error) {
 	reqBody := url.Values{
 		"appid":            {appID},
 		"market_hash_name": {hashName},
 	}
 	reqUrl := fmt.Sprintf("https://steamcommunity.com/market/pricehistory/?%s", reqBody.Encode())
-	res, err := core.authCore.HttpClient().Get(reqUrl)
+	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +170,7 @@ func (core *Core) PriceHistory(appID, hashName string, lastNDays int) ([]*PriceI
 	return priceInfoList, nil
 }
 
-func (core *Core) PriceOverview(appID, country, currencyID, marketHashName string) (*PriceOverviewInfo, error) {
+func (core *Core) PriceOverview(auth *auth.Core, appID, country, currencyID, marketHashName string) (*PriceOverviewInfo, error) {
 	reqBody := url.Values{
 		"appid":            {appID},
 		"country":          {country},
@@ -177,7 +178,7 @@ func (core *Core) PriceOverview(appID, country, currencyID, marketHashName strin
 		"market_hash_name": {marketHashName},
 	}
 	reqUrl := fmt.Sprintf("https://steamcommunity.com/market/priceoverview/?%s", reqBody.Encode())
-	res, err := core.authCore.HttpClient().Get(reqUrl)
+	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
 	}

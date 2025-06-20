@@ -1,19 +1,16 @@
 package market
 
 import (
-	"github.com/umichan0621/steam/pkg/auth"
 	"github.com/umichan0621/steam/pkg/common"
 )
 
 type Core struct {
-	authCore *auth.Core
 	language string
 	currency string
 	country  string
 }
 
-func (core *Core) Init(authCore *auth.Core) {
-	core.authCore = authCore
+func (core *Core) Init() {
 	core.language = "english"
 	core.currency = common.CurrencyUSD
 	core.country = "CN"

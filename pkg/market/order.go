@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/tidwall/gjson"
+	"github.com/umichan0621/steam/pkg/auth"
 	"golang.org/x/net/html"
 )
 
@@ -30,14 +31,14 @@ func CalculateReceivedPrice(payment float64) float64 {
 	return float64(received) / 100.0
 }
 
-func (core *Core) HistoryOrder(appID, contextID string, count uint64) ([]*SteamOrder, error) {
+func (core *Core) HistoryOrder(auth *auth.Core, appID, contextID string, count uint64) ([]*SteamOrder, error) {
 	params := url.Values{
 		"l":     {core.language},
 		"count": {strconv.FormatUint(count, 10)},
 	}
 
 	url := "https://steamcommunity.com/market/myhistory?" + params.Encode()
-	res, err := core.authCore.HttpClient().Get(url)
+	res, err := auth.HttpClient().Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -127,14 +128,16 @@ func generateHistoryRow2PriceMap(n *html.Node, priceMap *map[string]float64, his
 		class := ""
 		id := ""
 		for _, attr := range n.Attr {
-			if attr.Key == "class" {
+			switch attr.Key {
+			case "class":
 				class = attr.Val
-			} else if attr.Key == "id" {
+			case "id":
 				id = attr.Val
 			}
-			if class == "market_listing_row market_recent_listing_row" {
+			switch class {
+			case "market_listing_row market_recent_listing_row":
 				historyRow = id
-			} else if class == "market_listing_price" {
+			case "market_listing_price":
 				priceStr := strings.ReplaceAll(n.FirstChild.Data, "\t", "")
 				index := strings.Index(priceStr, " ")
 				if index >= 0 {

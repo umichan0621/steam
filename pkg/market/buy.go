@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/umichan0621/steam/pkg/auth"
 )
 
 // Success while Code == 1
@@ -17,7 +19,7 @@ type BuyOrderResponse struct {
 	OrderID uint64 `json:"buy_orderid,string"`
 }
 
-func (core *Core) CreateBuyOrder(appID uint64, paymentPrice float64, quantity uint64, currencyID, hashName string) (*BuyOrderResponse, error) {
+func (core *Core) CreateBuyOrder(auth *auth.Core, appID string, paymentPrice float64, quantity uint64, currencyID, hashName string) (*BuyOrderResponse, error) {
 	reqUrl := "https://steamcommunity.com/market/createbuyorder/"
 	reqHeader := http.Header{}
 	referer := strings.Replace(hashName, " ", "%20", -1)
@@ -26,12 +28,12 @@ func (core *Core) CreateBuyOrder(appID uint64, paymentPrice float64, quantity ui
 	reqHeader.Add("Referer", referer)
 	reqHeader.Add("Content-Type", "application/x-www-form-urlencoded")
 	reqBody := url.Values{
-		"appid":            {strconv.FormatUint(appID, 10)},
+		"appid":            {appID},
 		"currency":         {currencyID},
 		"market_hash_name": {hashName},
 		"price_total":      {strconv.FormatUint(uint64(paymentPrice*100), 10)},
 		"quantity":         {strconv.FormatUint(quantity, 10)},
-		"sessionid":        {core.authCore.SessionID()},
+		"sessionid":        {auth.SessionID()},
 	}
 
 	req, err := http.NewRequest(http.MethodPost, reqUrl, strings.NewReader(reqBody.Encode()))
@@ -41,7 +43,7 @@ func (core *Core) CreateBuyOrder(appID uint64, paymentPrice float64, quantity ui
 
 	req.Header = reqHeader
 
-	res, err := core.authCore.HttpClient().Do(req)
+	res, err := auth.HttpClient().Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +65,13 @@ func (core *Core) CreateBuyOrder(appID uint64, paymentPrice float64, quantity ui
 	return response, nil
 }
 
-func (core *Core) CancelBuyOrder(orderID uint64) error {
+func (core *Core) CancelBuyOrder(auth *auth.Core, orderID uint64) error {
 	reqUrl := "https://steamcommunity.com/market/cancelbuyorder/"
 	reqHeader := http.Header{}
 	reqHeader.Add("Referer", "https://steamcommunity.com/market")
 	reqHeader.Add("Content-Type", "application/x-www-form-urlencoded")
 	reqBody := url.Values{
-		"sessionid":   {core.authCore.SessionID()},
+		"sessionid":   {auth.SessionID()},
 		"buy_orderid": {strconv.FormatUint(orderID, 10)},
 	}
 
@@ -80,7 +82,7 @@ func (core *Core) CancelBuyOrder(orderID uint64) error {
 
 	req.Header = reqHeader
 
-	res, err := core.authCore.HttpClient().Do(req)
+	res, err := auth.HttpClient().Do(req)
 	if res != nil {
 		res.Body.Close()
 	}
