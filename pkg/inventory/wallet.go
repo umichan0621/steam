@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/umichan0621/steam/pkg/auth"
+	"github.com/umichan0621/steam/pkg/common"
 )
 
 type WalletInfo struct {
@@ -19,8 +20,8 @@ type WalletInfo struct {
 }
 
 func (core *Core) WalletBalance(auth *auth.Core) (*WalletInfo, error) {
-	url := "https://steamcommunity.com/market/"
-	res, err := auth.HttpClient().Get(url)
+	reqUrl := fmt.Sprintf("%s/market/", common.URI_STEAM_COMMUNITY)
+	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/tidwall/gjson"
 	"github.com/umichan0621/steam/pkg/auth"
+	"github.com/umichan0621/steam/pkg/common"
 	"github.com/umichan0621/steam/pkg/utils"
 )
 
@@ -40,7 +41,7 @@ type OrderGraph struct {
 
 // Get the name ID by hash name, which is used to query history price
 func (core *Core) ItemNameID(auth *auth.Core, appID, hashName string) (string, error) {
-	reqUrl := fmt.Sprintf("https://steamcommunity.com/market/listings/%s/%s", appID, url.PathEscape(hashName))
+	reqUrl := fmt.Sprintf("%s/market/listings/%s/%s", common.URI_STEAM_COMMUNITY, appID, url.PathEscape(hashName))
 	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return "", err
@@ -75,7 +76,7 @@ func (core *Core) ItemOrderGraph(auth *auth.Core, appID, itemNameID string) (*Or
 		"country":     {core.country},
 		"currency":    {core.currency},
 	}
-	reqUrl := "https://steamcommunity.com/market/itemordershistogram?" + reqBody.Encode()
+	reqUrl := fmt.Sprintf("%s/market/itemordershistogram?%s", common.URI_STEAM_COMMUNITY, reqBody.Encode())
 	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
@@ -121,7 +122,7 @@ func (core *Core) PriceHistory(auth *auth.Core, appID, hashName string, lastNDay
 		"appid":            {appID},
 		"market_hash_name": {hashName},
 	}
-	reqUrl := fmt.Sprintf("https://steamcommunity.com/market/pricehistory/?%s", reqBody.Encode())
+	reqUrl := fmt.Sprintf("%s/market/pricehistory/?%s", common.URI_STEAM_COMMUNITY, reqBody.Encode())
 	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
@@ -177,7 +178,7 @@ func (core *Core) PriceOverview(auth *auth.Core, appID, country, currencyID, mar
 		"currencyID":       {currencyID},
 		"market_hash_name": {marketHashName},
 	}
-	reqUrl := fmt.Sprintf("https://steamcommunity.com/market/priceoverview/?%s", reqBody.Encode())
+	reqUrl := fmt.Sprintf("%s/market/priceoverview/?%s", common.URI_STEAM_COMMUNITY, reqBody.Encode())
 	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err

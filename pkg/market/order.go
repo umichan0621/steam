@@ -11,6 +11,7 @@ import (
 
 	"github.com/tidwall/gjson"
 	"github.com/umichan0621/steam/pkg/auth"
+	"github.com/umichan0621/steam/pkg/common"
 	"golang.org/x/net/html"
 )
 
@@ -36,9 +37,8 @@ func (core *Core) HistoryOrder(auth *auth.Core, appID, contextID string, count u
 		"l":     {core.language},
 		"count": {strconv.FormatUint(count, 10)},
 	}
-
-	url := "https://steamcommunity.com/market/myhistory?" + params.Encode()
-	res, err := auth.HttpClient().Get(url)
+	reqUrl := fmt.Sprintf("%s/market/myhistory?%s", common.URI_STEAM_COMMUNITY, params.Encode())
+	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
 	}

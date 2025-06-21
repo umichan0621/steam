@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/umichan0621/steam/pkg/auth"
+	"github.com/umichan0621/steam/pkg/common"
 )
 
 // Success while Code == 1
@@ -20,11 +21,11 @@ type BuyOrderResponse struct {
 }
 
 func (core *Core) CreateBuyOrder(auth *auth.Core, appID string, paymentPrice float64, quantity uint64, currencyID, hashName string) (*BuyOrderResponse, error) {
-	reqUrl := "https://steamcommunity.com/market/createbuyorder/"
+	reqUrl := fmt.Sprintf("%s/market/createbuyorder/", common.URI_STEAM_COMMUNITY)
 	reqHeader := http.Header{}
-	referer := strings.Replace(hashName, " ", "%20", -1)
-	referer = strings.Replace(referer, "#", "%23", -1)
-	referer = fmt.Sprintf("https://steamcommunity.com/market/listings/%d/%s", appID, referer)
+	referer := strings.ReplaceAll(hashName, " ", "%20")
+	referer = strings.ReplaceAll(referer, "#", "%23")
+	referer = fmt.Sprintf("%s/market/listings/%s/%s", common.URI_STEAM_COMMUNITY, appID, referer)
 	reqHeader.Add("Referer", referer)
 	reqHeader.Add("Content-Type", "application/x-www-form-urlencoded")
 	reqBody := url.Values{
@@ -66,9 +67,9 @@ func (core *Core) CreateBuyOrder(auth *auth.Core, appID string, paymentPrice flo
 }
 
 func (core *Core) CancelBuyOrder(auth *auth.Core, orderID uint64) error {
-	reqUrl := "https://steamcommunity.com/market/cancelbuyorder/"
+	reqUrl := fmt.Sprintf("%s/market/cancelbuyorder/", common.URI_STEAM_COMMUNITY)
 	reqHeader := http.Header{}
-	reqHeader.Add("Referer", "https://steamcommunity.com/market")
+	reqHeader.Add("Referer", fmt.Sprintf("%s/market", common.URI_STEAM_COMMUNITY))
 	reqHeader.Add("Content-Type", "application/x-www-form-urlencoded")
 	reqBody := url.Values{
 		"sessionid":   {auth.SessionID()},

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/umichan0621/steam/pkg/auth"
+	"github.com/umichan0621/steam/pkg/common"
 )
 
 type MarketSellResponse struct {
@@ -21,8 +22,8 @@ type MarketSellResponse struct {
 }
 
 func (core *Core) CreateSellOrder(auth *auth.Core, appID, contextID, assetID string, amount, paymentPrice uint64) (*MarketSellResponse, error) {
-	reqUrl := "https://steamcommunity.com/market/sellitem/"
-	referUrl := fmt.Sprintf("https://steamcommunity.com/profiles/%s/inventory/", auth.SteamID())
+	reqUrl := fmt.Sprintf("%s/market/sellitem/", common.URI_STEAM_COMMUNITY)
+	referUrl := fmt.Sprintf("%s/profiles/%s/inventory/", common.URI_STEAM_COMMUNITY, auth.SteamID())
 	reqHeader := http.Header{}
 	reqHeader.Add("Content-Type", "application/x-www-form-urlencoded")
 	reqHeader.Add("Referer", referUrl)
