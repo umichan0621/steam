@@ -2,17 +2,14 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/umichan0621/steam/pkg/auth"
 )
 
 func main() {
-	httpClient := http.Client{}
 	mgr := auth.Core{}
 
 	mgr.Init(
-		&httpClient,
 		auth.LoginInfo{
 			UserName: "user",
 			Password: "password",

@@ -17,11 +17,14 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"github.com/umichan0621/steam/pkg/common"
 	errcode "github.com/umichan0621/steam/pkg/err"
 	pb "github.com/umichan0621/steam/pkg/proto"
 	"github.com/umichan0621/steam/pkg/utils"
 	"google.golang.org/protobuf/proto"
 )
+
+const kURI_STEAM_SETTOKEN = "https://steamcommunity.com/login/settoken"
 
 func (core *Core) Login() error {
 	log.Info("Connecting to steam server...")
@@ -87,7 +90,7 @@ func (core *Core) getPasswordRSAPublicKey(rsaRes *pb.CAuthentication_GetPassword
 	}
 	protoEncoded := base64.StdEncoding.EncodeToString(marshalData)
 
-	reqUrl := fmt.Sprintf("%s/IAuthenticationService/GetPasswordRSAPublicKey/v1?input_protobuf_encoded=%s", kURI_STEAM_API, protoEncoded)
+	reqUrl := fmt.Sprintf("%s/IAuthenticationService/GetPasswordRSAPublicKey/v1?input_protobuf_encoded=%s", common.URI_STEAM_API, protoEncoded)
 	httpReq, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
 		return err
@@ -135,7 +138,7 @@ func (core *Core) beginAuthSessionViaCredentials(encryptedPassword string, rsaTi
 		return err
 	}
 	protoEncoded := base64.StdEncoding.EncodeToString(marshalData)
-	reqUrl := fmt.Sprintf("%s/IAuthenticationService/BeginAuthSessionViaCredentials/v1", kURI_STEAM_API)
+	reqUrl := fmt.Sprintf("%s/IAuthenticationService/BeginAuthSessionViaCredentials/v1", common.URI_STEAM_API)
 
 	res, err := core.loginAuthPost(reqUrl, protoEncoded)
 	if err != nil {
@@ -166,21 +169,31 @@ func (core *Core) beginAuthSessionViaCredentials(encryptedPassword string, rsaTi
 func (core *Core) updateAuthSessionWithSteamGuardCode(clientID, steamID uint64, guardType pb.EAuthSessionGuardType,
 	updateAuthRes *pb.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Response) error {
 	code := ""
-	if guardType == pb.EAuthSessionGuardType_k_EAuthSessionGuardType_DeviceCode ||
-		guardType == pb.EAuthSessionGuardType_k_EAuthSessionGuardType_DeviceConfirmation {
+	if guardType == pb.EAuthSessionGuardType_k_EAuthSessionGuardType_DeviceConfirmation {
 		guardType = pb.EAuthSessionGuardType_k_EAuthSessionGuardType_DeviceCode
-		log.Info("Please input 2FA(Two-Factor Authentication) code:")
-		fmt.Scanf("%s", &code)
-		code = strings.ToUpper(code)
-		log.Infof("The input 2FA code is: %s", code)
-	} else if guardType == pb.EAuthSessionGuardType_k_EAuthSessionGuardType_EmailCode ||
-		guardType == pb.EAuthSessionGuardType_k_EAuthSessionGuardType_EmailConfirmation {
+	}
+	switch guardType {
+	case pb.EAuthSessionGuardType_k_EAuthSessionGuardType_DeviceCode:
+		if core.loginInfo.SharedSecret != "" {
+			code2fa, err := GenerateTwoFactorCode(core.loginInfo.SharedSecret, time.Now().Unix())
+			if err != nil {
+				return err
+			}
+			code = code2fa
+			log.Infof("2FA(Two-Factor Authentication) code: %s", code)
+		} else {
+			log.Info("Please input 2FA(Two-Factor Authentication) code:")
+			fmt.Scanf("%s", &code)
+			code = strings.ToUpper(code)
+			log.Infof("The input 2FA code is: %s", code)
+		}
+	case pb.EAuthSessionGuardType_k_EAuthSessionGuardType_EmailCode, pb.EAuthSessionGuardType_k_EAuthSessionGuardType_EmailConfirmation:
 		guardType = pb.EAuthSessionGuardType_k_EAuthSessionGuardType_EmailCode
 		log.Info("Please input E-mail verification code:")
 		fmt.Scanf("%s", &code)
 		code = strings.ToUpper(code)
 		log.Infof("The input E-mail verification code is: %s", code)
-	} else {
+	default:
 		return fmt.Errorf("fail, guardType = %d", guardType)
 	}
 	pbReq := pb.CAuthentication_UpdateAuthSessionWithSteamGuardCode_Request{
@@ -195,7 +208,7 @@ func (core *Core) updateAuthSessionWithSteamGuardCode(clientID, steamID uint64, 
 		return err
 	}
 	protoEncoded := base64.StdEncoding.EncodeToString(marshalData)
-	reqUrl := fmt.Sprintf("%s/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1", kURI_STEAM_API)
+	reqUrl := fmt.Sprintf("%s/IAuthenticationService/UpdateAuthSessionWithSteamGuardCode/v1", common.URI_STEAM_API)
 	res, err := core.loginAuthPost(reqUrl, protoEncoded)
 	if err != nil {
 		return err
@@ -224,7 +237,7 @@ func (core *Core) pollAuthSessionStatus(clientID uint64, requestID []byte,
 		return err
 	}
 	protoEncoded := base64.StdEncoding.EncodeToString(marshalData)
-	reqUrl := fmt.Sprintf("%s/IAuthenticationService/PollAuthSessionStatus/v1", kURI_STEAM_API)
+	reqUrl := fmt.Sprintf("%s/IAuthenticationService/PollAuthSessionStatus/v1", common.URI_STEAM_API)
 	res, err := core.loginAuthPost(reqUrl, protoEncoded)
 	if err != nil {
 		return err
@@ -260,7 +273,7 @@ func (core *Core) finalizeLogin(refreshToken string) (string, string, error) {
 	multipartWriter := multipart.NewWriter(reqBody)
 	multipartWriter.WriteField("nonce", refreshToken)
 	multipartWriter.WriteField("sessionid", core.cookieData.SessionID)
-	multipartWriter.WriteField("redir", fmt.Sprintf("%s/login/home/?goto=", kURI_STEAM_COMMUNITY))
+	multipartWriter.WriteField("redir", fmt.Sprintf("%s/login/home/?goto=", common.URI_STEAM_COMMUNITY))
 	multipartWriter.Close()
 
 	reqUrl := "https://login.steampowered.com/jwt/finalizelogin"
