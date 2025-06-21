@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const kURI_STEAM_SETTOKEN = "https://steamcommunity.com/login/settoken"
+const kURI_STEAM_SETTOKEN = common.URI_STEAM_COMMUNITY + "/login/settoken"
 
 func (core *Core) Login() error {
 	log.Info("Connecting to steam server...")
