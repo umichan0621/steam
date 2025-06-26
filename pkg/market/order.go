@@ -32,9 +32,9 @@ func CalculateReceivedPrice(payment float64) float64 {
 	return float64(received) / 100.0
 }
 
-func (core *Core) HistoryOrder(auth *auth.Core, appID, contextID string, count uint64) ([]*SteamOrder, error) {
+func HistoryOrder(auth *auth.Core, language, appID, contextID string, count uint64) ([]*SteamOrder, error) {
 	params := url.Values{
-		"l":     {core.language},
+		"l":     {language},
 		"count": {strconv.FormatUint(count, 10)},
 	}
 	reqUrl := fmt.Sprintf("%s/market/myhistory?%s", common.URI_STEAM_COMMUNITY, params.Encode())

@@ -40,7 +40,7 @@ type OrderGraph struct {
 }
 
 // Get the name ID by hash name, which is used to query history price
-func (core *Core) ItemNameID(auth *auth.Core, appID, hashName string) (string, error) {
+func ItemNameID(auth *auth.Core, appID, hashName string) (string, error) {
 	reqUrl := fmt.Sprintf("%s/market/listings/%s/%s", common.URI_STEAM_COMMUNITY, appID, url.PathEscape(hashName))
 	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
@@ -69,12 +69,12 @@ func (core *Core) ItemNameID(auth *auth.Core, appID, hashName string) (string, e
 	return "", fmt.Errorf("fail to get item name ID")
 }
 
-func (core *Core) ItemOrderGraph(auth *auth.Core, appID, itemNameID string) (*OrderGraph, error) {
+func ItemOrderGraph(auth *auth.Core, language, country, currency, appID, itemNameID string) (*OrderGraph, error) {
 	reqBody := url.Values{
 		"item_nameid": {itemNameID},
-		"language":    {core.language},
-		"country":     {core.country},
-		"currency":    {core.currency},
+		"language":    {language},
+		"country":     {country},
+		"currency":    {currency},
 	}
 	reqUrl := fmt.Sprintf("%s/market/itemordershistogram?%s", common.URI_STEAM_COMMUNITY, reqBody.Encode())
 	res, err := auth.HttpClient().Get(reqUrl)

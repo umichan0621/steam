@@ -21,7 +21,7 @@ type MarketSellResponse struct {
 	EmailDomain                string `json:"email_domain"`
 }
 
-func (core *Core) CreateSellOrder(auth *auth.Core, appID, contextID, assetID string, amount, paymentPrice uint64) (*MarketSellResponse, error) {
+func CreateSellOrder(auth *auth.Core, appID, contextID, assetID string, amount, paymentPrice uint64) (*MarketSellResponse, error) {
 	reqUrl := fmt.Sprintf("%s/market/sellitem/", common.URI_STEAM_COMMUNITY)
 	referUrl := fmt.Sprintf("%s/profiles/%s/inventory/", common.URI_STEAM_COMMUNITY, auth.SteamID())
 	reqHeader := http.Header{}

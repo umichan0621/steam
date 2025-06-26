@@ -20,7 +20,7 @@ type BuyOrderResponse struct {
 	OrderID uint64 `json:"buy_orderid,string"`
 }
 
-func (core *Core) CreateBuyOrder(auth *auth.Core, appID string, paymentPrice float64, quantity uint64, currencyID, hashName string) (*BuyOrderResponse, error) {
+func CreateBuyOrder(auth *auth.Core, appID string, paymentPrice float64, quantity uint64, currencyID, hashName string) (*BuyOrderResponse, error) {
 	reqUrl := fmt.Sprintf("%s/market/createbuyorder/", common.URI_STEAM_COMMUNITY)
 	reqHeader := http.Header{}
 	referer := strings.ReplaceAll(hashName, " ", "%20")
@@ -66,7 +66,7 @@ func (core *Core) CreateBuyOrder(auth *auth.Core, appID string, paymentPrice flo
 	return response, nil
 }
 
-func (core *Core) CancelBuyOrder(auth *auth.Core, orderID uint64) error {
+func CancelBuyOrder(auth *auth.Core, orderID uint64) error {
 	reqUrl := fmt.Sprintf("%s/market/cancelbuyorder/", common.URI_STEAM_COMMUNITY)
 	reqHeader := http.Header{}
 	reqHeader.Add("Referer", fmt.Sprintf("%s/market", common.URI_STEAM_COMMUNITY))
