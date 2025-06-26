@@ -1,8 +1,13 @@
 package trade
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -59,8 +64,8 @@ func GetTradeOffers(auth *auth.Core, timeCutOff time.Time) (*TradeOfferResponse,
 		"historical_only":        {"0"},
 		"time_historical_cutoff": {strconv.FormatInt(timeCutOff.Unix(), 10)},
 	}
-	getUrl := fmt.Sprintf("%s/IEconService/GetTradeOffers/v1/?%s", common.URI_STEAM_API, params.Encode())
-	httpRes, err := auth.HttpClient().Get(getUrl)
+	reqUrl := fmt.Sprintf("%s/IEconService/GetTradeOffers/v1/?%s", common.URI_STEAM_API, params.Encode())
+	httpRes, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +84,8 @@ func GetTradeOffer(auth *auth.Core, offerID string) (*TradeOffer, error) {
 		"access_token": {auth.AccessToken()},
 		"tradeofferid": {offerID},
 	}
-	getUrl := fmt.Sprintf("%s/IEconService/GetTradeOffer/v1/?%s", common.URI_STEAM_API, params.Encode())
-	httpRes, err := auth.HttpClient().Get(getUrl)
+	reqUrl := fmt.Sprintf("%s/IEconService/GetTradeOffer/v1/?%s", common.URI_STEAM_API, params.Encode())
+	httpRes, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +97,50 @@ func GetTradeOffer(auth *auth.Core, offerID string) (*TradeOffer, error) {
 		return nil, err
 	}
 	return res.Inner.Offer, nil
+}
+
+func AcceptTradeOffer(auth *auth.Core, offerID, partner string) error {
+	reqBody := new(bytes.Buffer)
+	multipartWriter := multipart.NewWriter(reqBody)
+	multipartWriter.WriteField("sessionid", auth.SessionID())
+	multipartWriter.WriteField("serverid", "1")
+	multipartWriter.WriteField("tradeofferid", offerID)
+	multipartWriter.WriteField("partner", partner)
+	multipartWriter.WriteField("captcha", "")
+	multipartWriter.Close()
+
+	reqUrl := fmt.Sprintf("%s/tradeoffer/%s/accept", common.URI_STEAM_COMMUNITY, offerID)
+	req, err := http.NewRequest("POST", reqUrl, reqBody)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+	req.Header.Set("Referer", fmt.Sprintf("%s/tradeoffer/%s", common.URI_STEAM_COMMUNITY, offerID))
+
+	httpRes, err := auth.HttpClient().Do(req)
+	if err != nil {
+		return err
+	}
+	defer httpRes.Body.Close()
+
+	if httpRes.StatusCode != http.StatusOK {
+		return fmt.Errorf("http error: %d", httpRes.StatusCode)
+	}
+	xx, _ := io.ReadAll(httpRes.Body)
+	fmt.Println(string(xx))
+	type Response struct {
+		ErrorMessage string `json:"strError"`
+	}
+
+	var response Response
+	if err = json.NewDecoder(httpRes.Body).Decode(&response); err != nil {
+		return err
+	}
+
+	if len(response.ErrorMessage) != 0 {
+		return errors.New(response.ErrorMessage)
+	}
+	return nil
 }
 
 func CancelTradeOffer(auth *auth.Core, offerID string) error {
