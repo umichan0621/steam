@@ -11,9 +11,9 @@ import (
 	"github.com/umichan0621/steam/pkg/common"
 )
 
-func (core *Core) AllItems(auth *auth.Core, appID, contextID, startAssetID string, count uint64, items *[]InventoryItem) (hasMore bool, lastAssetID uint64, err error) {
+func AllItems(auth *auth.Core, language, appID, contextID, startAssetID string, count uint64, items *[]InventoryItem) (hasMore bool, lastAssetID uint64, err error) {
 	params := url.Values{
-		"l":     {core.language},
+		"l":     {language},
 		"count": {strconv.FormatUint(count, 10)},
 	}
 	if startAssetID != "" {

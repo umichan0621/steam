@@ -19,7 +19,7 @@ type WalletInfo struct {
 	Success              int32   `json:"success"`
 }
 
-func (core *Core) WalletBalance(auth *auth.Core) (*WalletInfo, error) {
+func WalletBalance(auth *auth.Core) (*WalletInfo, error) {
 	reqUrl := fmt.Sprintf("%s/market/", common.URI_STEAM_COMMUNITY)
 	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
