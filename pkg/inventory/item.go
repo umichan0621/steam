@@ -11,7 +11,7 @@ import (
 	"github.com/umichan0621/steam/pkg/common"
 )
 
-func AllItems(auth *auth.Core, language, appID, contextID, startAssetID string, count uint64, items *[]InventoryItem) (hasMore bool, lastAssetID uint64, err error) {
+func AllItems(auth *auth.Core, language, appID, contextID, startAssetID string, count uint64, items *[]InventoryItem) (hasMore bool, lastAssetID string, err error) {
 	params := url.Values{
 		"l":     {language},
 		"count": {strconv.FormatUint(count, 10)},
@@ -23,19 +23,19 @@ func AllItems(auth *auth.Core, language, appID, contextID, startAssetID string, 
 	url := fmt.Sprintf("http://steamcommunity.com/inventory/%s/%s/%s?%s", auth.SteamID(), appID, contextID, params.Encode())
 	res, err := auth.HttpClient().Get(url)
 	if err != nil {
-		return false, 0, err
+		return false, "", err
 	}
 	defer res.Body.Close()
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return false, 0, err
+		return false, "", err
 	}
 	resp := Response{}
 	err = json.Unmarshal(data, &resp)
 	if err != nil {
-		return false, 0, err
+		return false, "", err
 	}
-
+	fmt.Println(string(data))
 	descriptions := make(map[string]int)
 	for i, desc := range resp.Descriptions {
 		key := fmt.Sprintf("%d_%d", desc.ClassID, desc.InstanceID)
@@ -61,12 +61,5 @@ func AllItems(auth *auth.Core, language, appID, contextID, startAssetID string, 
 		*items = append(*items, item)
 	}
 	hasMore = resp.HasMore != 0
-	if !hasMore {
-		return hasMore, 0, nil
-	}
-	lastAssetID, err = strconv.ParseUint(resp.LastAssetID, 10, 64)
-	if err != nil {
-		return hasMore, 0, err
-	}
-	return hasMore, lastAssetID, nil
+	return hasMore, resp.LastAssetID, nil
 }
