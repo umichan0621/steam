@@ -35,7 +35,7 @@ func AllItems(auth *auth.Core, language, appID, contextID, startAssetID string, 
 	if err != nil {
 		return false, "", err
 	}
-	fmt.Println(string(data))
+
 	descriptions := make(map[string]int)
 	for i, desc := range resp.Descriptions {
 		key := fmt.Sprintf("%d_%d", desc.ClassID, desc.InstanceID)
