@@ -95,6 +95,7 @@ func (core *Core) LoadCookie(cookiePath string) error {
 	cookieData := CookieData{
 		SessionID:        gjson.Get(jsonData, "SessionID").String(),
 		SteamLoginSecure: gjson.Get(jsonData, "SteamLoginSecure").String(),
+		RefreshToken:     gjson.Get(jsonData, "RefreshToken").String(),
 		SteamID:          gjson.Get(jsonData, "SteamID").String(),
 		Expires:          gjson.Get(jsonData, "Expires").Int(),
 		MaxAge:           int(gjson.Get(jsonData, "MaxAge").Int()),

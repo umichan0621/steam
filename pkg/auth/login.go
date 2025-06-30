@@ -80,6 +80,43 @@ func (core *Core) Login() error {
 	return nil
 }
 
+func (core *Core) RefreshCookieWithToken() error {
+	reqBody := new(bytes.Buffer)
+	steamID := core.cookieData.SteamID
+	refreshToken := core.cookieData.RefreshToken
+	multipartWriter := multipart.NewWriter(reqBody)
+	multipartWriter.WriteField("steamid", steamID)
+	multipartWriter.WriteField("refresh_token", refreshToken)
+	multipartWriter.Close()
+	reqUrl := fmt.Sprintf("%s/IAuthenticationService/GenerateAccessTokenForApp/v1", common.URI_STEAM_API)
+	httpReq, err := http.NewRequest("POST", reqUrl, reqBody)
+	if err != nil {
+		return err
+	}
+	httpReq.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+	res, err := core.httpClient.Do(httpReq)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return fmt.Errorf("fail to post settoken, status code = %d", res.StatusCode)
+	}
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	jsonStr := string(data)
+	accessToken := gjson.Get(jsonStr, "response").Get("access_token").String()
+	if accessToken == "" {
+		return fmt.Errorf("fail to parse access token: %s", jsonStr)
+	}
+	steamLoginSecure := steamID + "%7C%7C" + accessToken
+	core.cookieData.SteamLoginSecure = steamLoginSecure
+	core.ApplyCookie()
+	return nil
+}
+
 func (core *Core) getPasswordRSAPublicKey(rsaRes *pb.CAuthentication_GetPasswordRSAPublicKey_Response) error {
 	pbReq := pb.CAuthentication_GetPasswordRSAPublicKey_Request{
 		AccountName: core.loginInfo.UserName,
