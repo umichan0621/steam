@@ -221,7 +221,6 @@ func (core *Core) updateAuthSessionWithSteamGuardCode(clientID, steamID uint64, 
 	if res.StatusCode != 200 {
 		return fmt.Errorf("fail to request PollAuthSessionStatus, status code = %d", res.StatusCode)
 	}
-	log.Error("updateAuthReq header:", res.Header)
 	return proto.Unmarshal(data, updateAuthRes)
 }
 
@@ -267,7 +266,7 @@ func (core *Core) finalizeLogin(refreshToken string) (string, string, error) {
 	sessionID := make([]byte, hex.EncodedLen(len(randomBytes)))
 	hex.Encode(sessionID, randomBytes)
 	core.cookieData.SessionID = string(sessionID)
-
+	core.cookieData.RefreshToken = refreshToken
 	// Finalizelogin request
 	reqBody := new(bytes.Buffer)
 	multipartWriter := multipart.NewWriter(reqBody)

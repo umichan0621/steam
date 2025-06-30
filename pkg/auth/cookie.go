@@ -15,6 +15,7 @@ import (
 type CookieData struct {
 	SessionID        string
 	SteamLoginSecure string
+	RefreshToken     string
 	SteamID          string
 	Expires          int64
 	MaxAge           int
