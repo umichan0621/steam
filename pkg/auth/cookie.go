@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"os"
 	"time"
-
-	"github.com/tidwall/gjson"
 )
 
 type CookieData struct {
@@ -19,6 +17,7 @@ type CookieData struct {
 	SteamID          string
 	Expires          int64
 	MaxAge           int
+	RefreshTime      time.Time
 }
 
 func (core *Core) SetCookie(cookieData CookieData) { core.cookieData = cookieData }
@@ -65,6 +64,10 @@ func (core *Core) ApplyCookie() {
 
 func (core *Core) SaveCookie(cookiePath string) error {
 	cookieData, _ := json.Marshal(core.cookieData)
+	err := os.Remove(cookiePath)
+	if err != nil {
+		return err
+	}
 	file, err := os.OpenFile(cookiePath, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return err
@@ -91,15 +94,12 @@ func (core *Core) LoadCookie(cookiePath string) error {
 	if err != nil {
 		return err
 	}
-	jsonData := string(data)
-	cookieData := CookieData{
-		SessionID:        gjson.Get(jsonData, "SessionID").String(),
-		SteamLoginSecure: gjson.Get(jsonData, "SteamLoginSecure").String(),
-		RefreshToken:     gjson.Get(jsonData, "RefreshToken").String(),
-		SteamID:          gjson.Get(jsonData, "SteamID").String(),
-		Expires:          gjson.Get(jsonData, "Expires").Int(),
-		MaxAge:           int(gjson.Get(jsonData, "MaxAge").Int()),
+	cookieData := CookieData{}
+	err = json.Unmarshal(data, &cookieData)
+	if err != nil {
+		return err
 	}
+
 	core.SetCookie(cookieData)
 	return nil
 }

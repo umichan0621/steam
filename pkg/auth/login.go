@@ -113,6 +113,7 @@ func (core *Core) RefreshCookieWithToken() error {
 	}
 	steamLoginSecure := steamID + "%7C%7C" + accessToken
 	core.cookieData.SteamLoginSecure = steamLoginSecure
+	core.cookieData.RefreshTime = time.Now()
 	core.ApplyCookie()
 	return nil
 }
@@ -391,6 +392,7 @@ func (core *Core) generateCookieData(nonce, auth string) error {
 			break
 		}
 	}
+	core.cookieData.RefreshTime = time.Now()
 	core.ApplyCookie()
 	return nil
 }
