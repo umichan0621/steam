@@ -21,7 +21,7 @@ type MarketSellResponse struct {
 	EmailDomain                string `json:"email_domain"`
 }
 
-func CreateSellOrder(auth *auth.Core, appID, contextID, assetID string, amount, paymentPrice uint64) (*MarketSellResponse, error) {
+func CreateSellOrder(auth *auth.Core, appID, contextID, assetID string, amount, receivedPrice uint64) (*MarketSellResponse, error) {
 	reqUrl := fmt.Sprintf("%s/market/sellitem/", common.URI_STEAM_COMMUNITY)
 	referUrl := fmt.Sprintf("%s/profiles/%s/inventory/", common.URI_STEAM_COMMUNITY, auth.SteamID())
 	reqHeader := http.Header{}
@@ -33,7 +33,7 @@ func CreateSellOrder(auth *auth.Core, appID, contextID, assetID string, amount, 
 		"assetid":   {assetID},
 		"sessionid": {auth.SessionID()},
 		"amount":    {strconv.FormatUint(amount, 10)},
-		"price":     {strconv.FormatUint(paymentPrice, 10)},
+		"price":     {strconv.FormatUint(receivedPrice, 10)},
 	}
 
 	req, err := http.NewRequest(http.MethodPost, reqUrl, strings.NewReader(reqBody.Encode()))

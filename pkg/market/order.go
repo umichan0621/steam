@@ -25,13 +25,6 @@ type SteamOrder struct {
 	Price          float64
 }
 
-func CalculateReceivedPrice(payment float64) float64 {
-	received := int64(payment * 100)
-	received *= 100
-	received /= 115
-	return float64(received) / 100.0
-}
-
 func HistoryOrder(auth *auth.Core, language, appID, contextID string, count uint64) ([]*SteamOrder, error) {
 	params := url.Values{
 		"l":     {language},
