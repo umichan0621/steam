@@ -392,8 +392,8 @@ func (core *Core) generateCookieData(nonce, auth string) error {
 			break
 		}
 	}
-	core.cookieData.RefreshTime = time.Now()
 	core.ApplyCookie()
+	core.cookieData.RefreshTime = time.Now()
 	return nil
 }
 
