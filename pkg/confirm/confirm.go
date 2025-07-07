@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/umichan0621/steam/pkg/auth"
 	"github.com/umichan0621/steam/pkg/common"
@@ -37,7 +38,13 @@ type Confirmation struct {
 	Summary      []string `json:"summary"`
 }
 
-func GetConfirmations(auth *auth.Core, identitySecret string, current int64) ([]*Confirmation, error) {
+func GetConfirmations(auth *auth.Core) ([]*Confirmation, error) {
+	identitySecret := auth.IdentitySecret()
+	if identitySecret == "" {
+		return nil, fmt.Errorf("empty identity secret")
+	}
+	current := time.Now().Unix()
+
 	key, err := generateConfirmationCode(identitySecret, "conf", current)
 	if err != nil {
 		return nil, err
@@ -73,7 +80,13 @@ func GetConfirmations(auth *auth.Core, identitySecret string, current int64) ([]
 	return res.Confirmations, nil
 }
 
-func AnswerConfirmation(auth *auth.Core, confirmation *Confirmation, identitySecret, answer string, current int64) error {
+func AnswerConfirmation(auth *auth.Core, confirmation *Confirmation, answer string) error {
+	identitySecret := auth.IdentitySecret()
+	if identitySecret == "" {
+		return fmt.Errorf("empty identity secret")
+	}
+	current := time.Now().Unix()
+
 	key, err := generateConfirmationCode(identitySecret, answer, current)
 	if err != nil {
 		return err
