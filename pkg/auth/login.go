@@ -76,6 +76,7 @@ func (core *Core) Login() error {
 	if err != nil {
 		return err
 	}
+	core.cookieData.RefreshTime = time.Now()
 	log.Info("Login succeeded.")
 	return nil
 }
@@ -393,7 +394,6 @@ func (core *Core) generateCookieData(nonce, auth string) error {
 		}
 	}
 	core.ApplyCookie()
-	core.cookieData.RefreshTime = time.Now()
 	return nil
 }
 
