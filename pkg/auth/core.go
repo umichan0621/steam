@@ -39,6 +39,7 @@ func (core *Core) SteamID() string          { return core.cookieData.SteamID }
 func (core *Core) SessionID() string        { return core.cookieData.SessionID }
 func (core *Core) DeviceID() string         { return core.deviceID }
 func (core *Core) IdentitySecret() string   { return core.loginInfo.IdentitySecret }
+func (core *Core) RefreshTime() time.Time   { return core.cookieData.RefreshTime }
 
 func (core *Core) AccessToken() string {
 	temp := strings.Split(core.cookieData.SteamLoginSecure, "%7C%7C")
