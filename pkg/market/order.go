@@ -16,9 +16,7 @@ import (
 )
 
 type SteamOrder struct {
-	AssetID        uint64 `json:"id,string"`
-	ClassID        uint64 `json:"classid,string"`
-	InstanceID     uint64 `json:"instanceid,string"`
+	AssetID        string `json:"id"`
 	MarketName     string `json:"market_name"`
 	MarketHashName string `json:"market_hash_name"`
 	Commodity      uint64 `json:"commodity"`
@@ -74,8 +72,8 @@ func HistoryOrder(auth *auth.Core, language, appID, contextID string, start, cou
 	historyRow2AssetID := generateHistoryRow2AssetIDMap(hoversData)
 	historyRow2Price := map[string]float64{}
 	historyRow2DateString := map[string]string{}
-	assetID2Price := map[uint64]float64{}
-	assetID2DateString := map[uint64]string{}
+	assetID2Price := map[string]float64{}
+	assetID2DateString := map[string]string{}
 	generateHistoryRow2PriceMap(htmlNode, &historyRow2Price, "empty")
 	generateHistoryRow2DateStringMap(htmlNode, &historyRow2DateString, "empty")
 	for historyRow, assetID := range historyRow2AssetID {
@@ -102,8 +100,8 @@ func HistoryOrder(auth *auth.Core, language, appID, contextID string, start, cou
 	return soldOrdersList, nil
 }
 
-func generateHistoryRow2AssetIDMap(hovers string) map[string]uint64 {
-	res := map[string]uint64{}
+func generateHistoryRow2AssetIDMap(hovers string) map[string]string {
+	res := map[string]string{}
 	hoversList := strings.Split(hovers, ";")
 	for _, tmp := range hoversList {
 		elements := strings.Split(tmp, ",")
@@ -120,10 +118,7 @@ func generateHistoryRow2AssetIDMap(hovers string) map[string]uint64 {
 		historyRow = strings.ReplaceAll(historyRow, " ", "")
 		asstIDStr = strings.ReplaceAll(asstIDStr, "'", "")
 		asstIDStr = strings.ReplaceAll(asstIDStr, " ", "")
-		asstID, err := strconv.ParseUint(asstIDStr, 10, 64)
-		if err == nil {
-			res[historyRow] = asstID
-		}
+		res[historyRow] = asstIDStr
 	}
 	return res
 }
