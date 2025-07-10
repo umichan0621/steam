@@ -23,14 +23,17 @@ type SteamOrder struct {
 	MarketHashName string `json:"market_hash_name"`
 	Commodity      uint64 `json:"commodity"`
 	Price          float64
+	DateString     string
 }
 
-func HistoryOrder(auth *auth.Core, language, appID, contextID string, count uint64) ([]*SteamOrder, error) {
+func HistoryOrder(auth *auth.Core, language, appID, contextID string, start, count uint64) ([]*SteamOrder, error) {
 	params := url.Values{
 		"l":     {language},
+		"start": {strconv.FormatUint(start, 10)},
 		"count": {strconv.FormatUint(count, 10)},
 	}
 	reqUrl := fmt.Sprintf("%s/market/myhistory?%s", common.URI_STEAM_COMMUNITY, params.Encode())
+	fmt.Println(reqUrl)
 	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
@@ -70,21 +73,30 @@ func HistoryOrder(auth *auth.Core, language, appID, contextID string, count uint
 
 	historyRow2AssetID := generateHistoryRow2AssetIDMap(hoversData)
 	historyRow2Price := map[string]float64{}
+	historyRow2DateString := map[string]string{}
 	assetID2Price := map[uint64]float64{}
+	assetID2DateString := map[uint64]string{}
 	generateHistoryRow2PriceMap(htmlNode, &historyRow2Price, "empty")
-
+	generateHistoryRow2DateStringMap(htmlNode, &historyRow2DateString, "empty")
 	for historyRow, assetID := range historyRow2AssetID {
 		price, ok := historyRow2Price[historyRow]
 		if ok {
 			assetID2Price[assetID] = price
 		}
+		dateString, ok := historyRow2DateString[historyRow]
+		if ok {
+			assetID2DateString[assetID] = dateString
+		}
 	}
-
 	for _, soldOrder := range soldOrdersList {
 		assetID := soldOrder.AssetID
 		price, ok := assetID2Price[assetID]
 		if ok {
 			soldOrder.Price = price
+		}
+		dateString, ok := assetID2DateString[assetID]
+		if ok {
+			soldOrder.DateString = dateString
 		}
 	}
 	return soldOrdersList, nil
@@ -147,5 +159,32 @@ func generateHistoryRow2PriceMap(n *html.Node, priceMap *map[string]float64, his
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		generateHistoryRow2PriceMap(c, priceMap, historyRow)
+	}
+}
+
+func generateHistoryRow2DateStringMap(n *html.Node, dateStringMap *map[string]string, historyRow string) {
+	if n.Type == html.ElementNode {
+		class := ""
+		id := ""
+		for _, attr := range n.Attr {
+			switch attr.Key {
+			case "class":
+				class = attr.Val
+			case "id":
+				id = attr.Val
+			}
+			switch class {
+			case "market_listing_row market_recent_listing_row":
+				historyRow = id
+			case "market_listing_listed_date_combined":
+				dateString := n.FirstChild.Data
+				dateString = strings.ReplaceAll(dateString, "\t", "")
+				dateString = strings.ReplaceAll(dateString, "\n", "")
+				(*dateStringMap)[historyRow] = dateString
+			}
+		}
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		generateHistoryRow2DateStringMap(c, dateStringMap, historyRow)
 	}
 }
