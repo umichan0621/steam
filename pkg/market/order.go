@@ -20,6 +20,7 @@ type SteamOrder struct {
 	MarketName     string `json:"market_name"`
 	MarketHashName string `json:"market_hash_name"`
 	Commodity      uint64 `json:"commodity"`
+	Seq            uint64
 	Price          float64
 	DateString     string
 }
@@ -31,7 +32,6 @@ func HistoryOrder(auth *auth.Core, language, appID, contextID string, start, cou
 		"count": {strconv.FormatUint(count, 10)},
 	}
 	reqUrl := fmt.Sprintf("%s/market/myhistory?%s", common.URI_STEAM_COMMUNITY, params.Encode())
-	fmt.Println(reqUrl)
 	res, err := auth.HttpClient().Get(reqUrl)
 	if err != nil {
 		return nil, err
@@ -48,20 +48,21 @@ func HistoryOrder(auth *auth.Core, language, appID, contextID string, start, cou
 
 	jsonData := string(data)
 	success := gjson.Get(jsonData, "success").Bool()
+	totalCount := gjson.Get(jsonData, "total_count").Uint()
 	if !success {
 		return nil, fmt.Errorf("fail to get market history")
 	}
 	assets := gjson.Get(jsonData, "assets")
 	assetsList := assets.Get(appID).Get(contextID)
 
-	soldOrdersList := []*SteamOrder{}
+	ordersList := []*SteamOrder{}
 	assetsList.ForEach(func(_, val gjson.Result) bool {
-		soldOrder := &SteamOrder{}
-		err := json.Unmarshal([]byte(val.String()), soldOrder)
+		order := &SteamOrder{}
+		err := json.Unmarshal([]byte(val.String()), order)
 		if err != nil {
 			return false
 		}
-		soldOrdersList = append(soldOrdersList, soldOrder)
+		ordersList = append(ordersList, order)
 		return true
 	})
 
@@ -86,18 +87,19 @@ func HistoryOrder(auth *auth.Core, language, appID, contextID string, start, cou
 			assetID2DateString[assetID] = dateString
 		}
 	}
-	for _, soldOrder := range soldOrdersList {
-		assetID := soldOrder.AssetID
+	for i, order := range ordersList {
+		assetID := order.AssetID
 		price, ok := assetID2Price[assetID]
 		if ok {
-			soldOrder.Price = price
+			order.Price = price
 		}
 		dateString, ok := assetID2DateString[assetID]
 		if ok {
-			soldOrder.DateString = dateString
+			order.DateString = dateString
 		}
+		order.Seq = totalCount - start - uint64(i)
 	}
-	return soldOrdersList, nil
+	return ordersList, nil
 }
 
 func generateHistoryRow2AssetIDMap(hovers string) map[string]string {
