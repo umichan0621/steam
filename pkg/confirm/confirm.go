@@ -108,28 +108,29 @@ func AnswerConfirmation(auth *auth.Core, confirmation *Confirmation, answer stri
 		return err
 	}
 	httpReq.Header.Set("X-Requested-With", "XMLHttpRequest")
-
-	resp, err := auth.HttpClient().Do(httpReq)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
+	httpRes, err := auth.HttpClient().Do(httpReq)
 	if err != nil {
 		return err
 	}
-	b, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(b))
+	if httpRes != nil {
+		defer httpRes.Body.Close()
+	}
+	data, err := io.ReadAll(httpRes.Body)
+	if err != nil {
+		return err
+	}
 	type Response struct {
 		Success bool   `json:"success"`
 		Message string `json:"message"`
 	}
-
-	var response Response
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	res := Response{}
+	err = json.Unmarshal(data, &res)
+	if err != nil {
 		return err
 	}
 
-	if !response.Success {
-		return errors.New(response.Message)
+	if !res.Success {
+		return errors.New(res.Message)
 	}
 	return nil
 }
